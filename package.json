@@ -2,6 +2,8 @@
   "name": "components-library",
   "version": "0.1.0",
   "description": "Variant-first React component library (CVA + Tailwind 4 + Radix primitives) with a dual-entry caching module (TanStack Query browser cache + Redis server cache).",
+  "author": "Marcos Tomatti <marcostomatti.cv@gmail.com>",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/marcostomatti/template-component-library.git"

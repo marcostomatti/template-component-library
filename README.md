@@ -10,16 +10,20 @@ live here.
 Peer deps: `react` / `react-dom` ^19 (and optionally `ioredis` ^5 for the
 server cache).
 
-## Origins
+## Authoring & origins
 
-This library was extracted from **Open Tomato** (a private project) as a
-standalone package, intended for ad-hoc apps that use a similar application
-shell — `AppShell`/`AuthShell`, the auth page set, and the variant-first atoms
-they compose. The **design-system extraction pipeline** (design handoff →
-component specs → rosetta side-by-side comparison) still lives in the
-*component-breakdown* project; this repo carries the consuming half of that
-workflow — the `design/` reference-page contract, `scripts/compare-design.mjs`,
-and the `component-porter` agent for landing finished components here.
+Created by **Marcos Tomatti**. This library was extracted from **Open Tomato**
+(a private project by the same author) as a standalone package, intended for
+ad-hoc apps that use a similar application shell — `AppShell`/`AuthShell`, the
+auth page set, and the variant-first atoms they compose. The **design-system
+extraction pipeline** (design handoff → component specs → rosetta side-by-side
+comparison) still lives in the *component-breakdown* project; this repo carries
+the consuming half of that workflow — the `design/` reference-page contract,
+`scripts/compare-design.mjs`, and the `component-porter` agent for landing
+finished components here.
+
+If you build on this work, keep the pointer back to it — see
+[License](#license).
 
 ## Structure
 
@@ -196,3 +200,14 @@ in the repo. The local suite above works regardless.
 Operator setup and enablement:
 [docs/ci/grow-box-runner-setup.md](docs/ci/grow-box-runner-setup.md); verify
 the wiring with `scripts/verify-visual-ci.sh`.
+
+## License
+
+[Apache-2.0](LICENSE) — permissive: use, modify, and redistribute freely,
+commercial use included. What the license **does** require (§4) is
+attribution: redistributions in source or bundled form must retain the
+[LICENSE](LICENSE) and the notices in [NOTICE](NOTICE) — the credit to the
+original author and the origin projects (Open Tomato, component-breakdown).
+Don't strip the credit; everything else is fair game.
+
+Copyright 2026 Marcos Tomatti.
