@@ -1,0 +1,127 @@
+name: Visual Regression
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Runs on the grow-box homelab runner: never execute fork code there.
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    # Same-repo events only; fork PRs are skipped (no homelab exposure).
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, grow-box]
+    steps:
+      - uses: actions/checkout@v4
+
+      # The runner host deliberately has no system Node. `bun x` honors the
+      # `#!/usr/bin/env node` shebang of jest/test-storybook when node is on
+      # PATH and only then matches local behavior — without it, those bins run
+      # under bun's runtime and crash (jest class-extends, http internals).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Browsers land in the runner user's playwright cache. The OS libraries
+      # they need are a one-time operator install — see
+      # docs/ci/grow-box-runner-setup.md (playwright install-deps).
+      # `bun x`, not `bunx`: the runner host has the bun binary but not the
+      # bunx alias symlink; the subcommand form works everywhere.
+      - name: Install pinned Playwright browser
+        run: bun x playwright install chromium
+
+      # Baselines are per-environment and untracked; this runner's set is
+      # persisted through GitHub's cache backend. The run_id key never hits,
+      # so restore-keys always resolves to the most recently saved set.
+      - name: Restore visual baselines
+        id: baselines
+        uses: actions/cache/restore@v4
+        with:
+          path: visual/__image_snapshots__
+          key: visual-baselines-${{ runner.os }}-pw1.61.1-${{ github.run_id }}
+          restore-keys: |
+            visual-baselines-${{ runner.os }}-pw1.61.1-
+
+      - name: Run visual suite
+        id: visual
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # Merge to main = accepted truth: refresh this runner's baselines.
+            bun run test:visual:update
+            echo "mode=refresh" >> "$GITHUB_OUTPUT"
+          elif [[ -z "$(ls -A visual/__image_snapshots__ 2>/dev/null)" ]]; then
+            # No cache (first run or evicted): seed and pass; gate arms next run.
+            bun run test:visual:update
+            echo "mode=seeded" >> "$GITHUB_OUTPUT"
+          else
+            bun run test:visual
+            echo "mode=gate" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save refreshed baselines
+        if: github.event_name == 'push' && always()
+        uses: actions/cache/save@v4
+        with:
+          path: visual/__image_snapshots__
+          key: visual-baselines-${{ runner.os }}-pw1.61.1-${{ github.run_id }}
+
+      - name: Upload diff artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diffs-${{ github.run_id }}
+          path: |
+            visual/__diff_output__/
+            visual-report.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # Best-effort: the visual report is the source of truth; a GitHub API
+      # blip while commenting must not fail the gate (seen 2026-07-17: the
+      # suite passed 182/182 but a 503 from the comments API failed the job).
+      - name: Comment results on PR
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const mode = '${{ steps.visual.outputs.mode }}';
+            let summary = '✅ Visual regression: all stories match this runner\'s baselines.';
+            if (mode === 'seeded') {
+              summary = '🌱 Visual regression: no baseline cache found — baselines were seeded on this run. The gate arms on the next run.';
+            } else {
+              try {
+                const r = JSON.parse(fs.readFileSync('visual-report.json', 'utf8'));
+                if (r.numFailedTests > 0) {
+                  summary = `❌ Visual regression: ${r.numFailedTests} story screenshot(s) changed. ` +
+                    `Download the \`visual-diffs-${context.runId}\` artifact to inspect diffs ` +
+                    '(baseline | delta | actual). Intentional changes: merge refreshes the baselines automatically.';
+                }
+              } catch (e) {
+                summary = '⚠️ Visual regression: could not parse visual-report.json — check the run logs.';
+              }
+            }
+            const body = `### Visual Regression\n\n${summary}`;
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo, issue_number: context.issue.number,
+            });
+            const prev = comments.find(c => c.body.startsWith('### Visual Regression'));
+            if (prev) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: prev.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
+            }
