@@ -40,6 +40,13 @@ gh api repos/{owner}/{repo}/contents/.github/workflows/visual.yml >/dev/null 2>&
   || fail "visual.yml not found on the default branch — merge it to main"
 ok "visual.yml present on default branch"
 
+# 4b. Pipeline enabled — the workflow is a no-op until the untracked
+# VISUAL_CI repository variable is set (docs/ci/grow-box-runner-setup.md §0)
+VISUAL_CI_VALUE="$(gh variable get VISUAL_CI 2>/dev/null)"
+[ "${VISUAL_CI_VALUE}" = "enabled" ] \
+  || fail "VISUAL_CI variable not 'enabled' — the gate is off; run 'gh variable set VISUAL_CI --body enabled' (docs/ci/grow-box-runner-setup.md §0)"
+ok "VISUAL_CI variable is 'enabled'"
+
 # 5. Local visual path works (advisory environment)
 if [ "${SKIP_LOCAL:-0}" != "1" ]; then
   echo "▶ Running local visual suite (set SKIP_LOCAL=1 to skip)…"

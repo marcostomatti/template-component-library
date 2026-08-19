@@ -4,6 +4,33 @@ Operator steps to host this repo on GitHub and run its visual regression suite o
 the existing grow-box self-hosted runner. Each step has a command and a "confirm
 it worked" check.
 
+## 0. The pipeline is OFF by default — enabling is untracked
+
+`.github/workflows/visual.yml` is a **reference implementation**: anyone
+pulling this library into their project gets the shape of the gate, but the
+job is a no-op until the repository Actions variable `VISUAL_CI` is set to
+`enabled`. That flag — like the runner registration itself — lives in GitHub
+settings, so the real pipeline wiring (which runner, whether it runs at all)
+is never tracked in the repo. The local suite (`bun run test:visual`,
+`bun run test:visual:update`) is independent of all of this and always works.
+
+```bash
+gh variable set VISUAL_CI --body enabled     # turn the gate on
+gh variable delete VISUAL_CI                 # turn it back off
+```
+
+Optional: point the job at a different runner without editing the workflow by
+setting `VISUAL_CI_RUNNER` to a JSON label array:
+
+```bash
+gh variable set VISUAL_CI_RUNNER --body '["self-hosted","my-runner"]'
+```
+
+**Confirm:** `gh variable list` shows `VISUAL_CI` = `enabled`; the next push's
+"Visual Regression" run executes instead of skipping.
+
+Only proceed with the steps below when you actually want the gate live.
+
 **Context.** The grow-box runner (see grow-box `docs/runbooks/cicd.md` and
 `migrations/0008-github-runner.sh`) is a native systemd runner on the Ubuntu host:
 unprivileged `actions-runner` user, labels `self-hosted, grow-box`, **no Docker

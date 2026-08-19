@@ -1,12 +1,25 @@
 name: Visual Regression
 
+# OFF BY DEFAULT. This workflow is a reference implementation of the visual
+# gate — it does nothing until the repository Actions variable VISUAL_CI is
+# set to "enabled" (Settings → Secrets and variables → Actions → Variables,
+# or `gh variable set VISUAL_CI --body enabled`). The activation flag and the
+# runner registration live in GitHub settings, NOT in the repo, so the real
+# pipeline wiring is never tracked. The local suite (`bun run test:visual`)
+# is independent of this file and always works.
+#
+# Runner: defaults to a self-hosted runner labeled `grow-box`; override
+# without editing this file via the VISUAL_CI_RUNNER variable (a JSON label
+# array, e.g. '["self-hosted","my-runner"]').
+# Setup: docs/ci/grow-box-runner-setup.md
+
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
 
-# Runs on the grow-box homelab runner: never execute fork code there.
+# Runs on a self-hosted runner: never execute fork code there.
 permissions:
   contents: read
   pull-requests: write
@@ -17,9 +30,10 @@ concurrency:
 
 jobs:
   visual:
-    # Same-repo events only; fork PRs are skipped (no homelab exposure).
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, grow-box]
+    # Gated on the untracked VISUAL_CI variable; same-repo events only —
+    # fork PRs are skipped (no self-hosted-network exposure).
+    if: vars.VISUAL_CI == 'enabled' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ${{ fromJSON(vars.VISUAL_CI_RUNNER || '["self-hosted","grow-box"]') }}
     steps:
       - uses: actions/checkout@v4
 

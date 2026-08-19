@@ -88,10 +88,14 @@ Interrupted runs can leave static servers on ports 6006/6007/6016
 
 ## Visual CI
 
-`.github/workflows/visual.yml` runs the visual suite on the self-hosted
-`grow-box` runner: PRs gate against the runner's cached baselines, merges to
-`main` refresh them, diffs upload as artifacts, and a PR comment summarizes.
-Operator setup lives in `docs/ci/grow-box-runner-setup.md`; wiring is checked by
+`.github/workflows/visual.yml` runs the visual suite on a self-hosted runner
+(default label `grow-box`): PRs gate against the runner's cached baselines,
+merges to `main` refresh them, diffs upload as artifacts, and a PR comment
+summarizes. **It is OFF by default** — the job no-ops until the untracked
+repository Actions variable `VISUAL_CI` is `enabled` (runner override via
+`VISUAL_CI_RUNNER`); the live wiring is intentionally not tracked in the repo.
+The local visual suite is independent and always available. Operator setup and
+enablement live in `docs/ci/grow-box-runner-setup.md`; wiring is checked by
 `scripts/verify-visual-ci.sh`.
 
 ## Reference-free rule (CRITICAL)
