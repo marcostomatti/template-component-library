@@ -109,6 +109,14 @@ the design-system extraction pipeline still lives). Everywhere else — code
 comments, stories, docblocks — stay neutral ("the design source", "the
 workbench repo"); origin projects are not public.
 
+## Plans and specs
+
+Working plans and specs go in `.plans/` and `.specs/` at the repo root —
+both **gitignored on purpose**: these files routinely describe critical
+bugs (privacy/security) before they are patched, and must never reach the
+remote ahead of the fix. Never "tidy" them into a tracked path, and never
+weaken the `.gitignore` entries.
+
 ## Workflow
 
 Feature-branch → PR → merge. Run the verification order above before any PR.
