@@ -102,7 +102,10 @@ enablement live in `docs/ci/grow-box-runner-setup.md`; wiring is checked by
 
 This library is standalone. It must never **depend on** the repositories it
 was extracted from — no imports or cross-repo paths; ESLint enforces this
-(`no-restricted-imports` in `eslint.config.mjs`). Prose references to the
+(`no-restricted-imports` in `eslint.config.mjs`). The one exception is the
+shared ESLint and TypeScript config packages in `devDependencies`: they are
+published dev tooling and never ship, so `eslint.config.mjs` itself is left
+out of the gate. Prose references to the
 origins are allowed only where deliberate: the README's "Origins" section
 names Open Tomato (the private source project) and component-breakdown (where
 the design-system extraction pipeline still lives). Everywhere else — code
