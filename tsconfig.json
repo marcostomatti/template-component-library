@@ -1,26 +1,15 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "React Library",
+  "extends": "@open-tomato/typescript-config/react",
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "moduleDetection": "force",
-    "resolveJsonModule": true,
-    "allowImportingTsExtensions": false,
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "useDefineForClassFields": true,
-    "jsx": "react-jsx",
-    "types": ["node"]
+    "types": ["node"],
+    // Off: about 600 exports lack an explicit type, most of them inferred CVA
+    // variant functions in the *.variants.ts files, plus components and story
+    // objects. vite-plugin-dts emits the declarations from the full program,
+    // so nothing needs per-file declarations today. Follow-up: annotate the
+    // variants exports and turn it back on.
+    "isolatedDeclarations": false
   },
   "include": ["src", "*.ts", "*.tsx", "*.mjs", ".storybook"],
   "exclude": ["node_modules", "dist", "storybook-static"]
